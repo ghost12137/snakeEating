@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>贪吃蛇</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      background-color: #090e20;
+    }
+
+    .big {
+      width: 1000px;
+      height: 600px;
+      border: 1px dashed #fff;
+      margin: 30px auto 0;
+      position: relative;
+    }
+
+    p {
+      margin-bottom: 10px;
+    }
+
+    .right span {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #fff;
+      border-radius: 30%;
+    }
+
+    ul li {
+      list-style: none;
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: #b5cad5;
+      box-sizing: border-box;
+      border: 1px solid #090e20;
+    }
+
+    ul li b {
+      display: block;
+      z-index: 100;
+      width: 2px;
+      height: 18px;
+      background-color: #b5cad5;
+      position: absolute;
+      top: 0;
+      left: 8px;
+      transform-origin: 11px 9px;
+      transform: translate(-10px, 0) rotate(0deg);
+    }
+
+    ul li:first-child b {
+      width: 4px;
+      transform: translate(-12px, 0) rotate(0deg);
+    }
+
+    ul li:last-child b {
+      background-color: transparent;
+    }
+
+    ul li:nth-child(1) {
+      border-radius: 0 50% 50% 0;
+      /*transform:scale(2,2);*/
+    }
+
+    ul li:nth-child(1):before {
+      content: '';
+      display: block;
+      background-color: #090e20;
+      width: 2px;
+      height: 2px;
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      z-index: 2;
+    }
+
+    ul li:nth-child(1):after {
+      content: '';
+      display: block;
+      background-color: #090e20;
+      width: 2px;
+      height: 2px;
+      position: absolute;
+      top: 5px;
+      right: 10px;
+    }
+
+    .explain {
+      float: left;
+      box-sizing: border-box;
+      border-right: 1px dashed #fff;
+      height: 100%;
+      width: 260px;
+      color: #fff;
+    }
+
+    .explain em {
+      color: #b3c6ff;
+      font-style: normal;
+    }
+
+    ol li {
+      margin-left: 25px;
+    }
+
+    .right {
+      width: 740px;
+      float: right;
+      height: 100%;
+      position: relative;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="big">
+    <div class="explain">
+      <p>点击<em>空格</em>开始或暂停</p>
+      <p>可通过<em>WASD</em>或者<em>方向键</em>控制方向</p>
+      <p>可通过<em>回车键</em>或者<em>Q</em>加速</p>
+      <p>当改变方向,或者吃到小球,速度自动恢复正常</p>
+      <br>
+      <p>以下为每局吃掉的小球个数</p>
+      <ol></ol>
+    </div>
+    <div class="right">
+      <span></span>
+      <ul>
+      </ul>
+    </div>
+  </div>
+</body>
+<script>
+  window.onload = function () {
+    //获取元素节点
+    var big = document.querySelector(".big");
+    var span = document.querySelector("span");
+    var ul = document.querySelector("ul");
+    var ol = document.querySelector("ol");
+    var ol_lis; //预留的ol中的li标签
+    var lis; //预留的ul中的li标签,即贪吃蛇的身子
+    var times; //速度,初始为150
+    var arrall; //二维数组,每一项为一个数组,其中保存每个li的x轴y轴坐标和方向
+    var timer; //蛇运动时的定时器
+    var timers; //数组,蛇吃到小球,小球白点顺着身子流动的定时器,之所以是数组,是因为可能上一个小球白点还没到尾部,蛇又吃了一个
+    var index; //数组,和times绑定的
+    var direction; //现在蛇运动的方向
+    var flag; //判断是否按下了方向键
+    var num; //用来记忆最初始有几个li,计数吃掉几个小球时减去
+    var stars = false; //判断是否游戏中true或者false
+    var spanX; //保存食物小球的坐标
+    var spanY;
+    star();
+    //初始化函数
+    function star() {
+      times = 200;
+      arrall = [];
+      timers = [];
+      index = [];
+      ul.innerHTML = "<li></li><li></li><li></li><li></li>";
+      lis = document.querySelectorAll("ul li");
+      num = lis.length;
+      //给每一个li定位,且记录到arrall中
+      for (var i = lis.length - 1; i >= 0; i--) {
+        var arr = [0, 20 * i, "right"];
+        arrall[arrall.length] = arr;
+        lis[i].style.top = 0;
+        lis[i].style.left = 20 * (lis.length - 1 - i) + "px";
+        var b = document.createElement('b');
+        lis[i].appendChild(b);
+      }
+      //给arrall多造一个子元素，用来为吃到小点后新增的身子赋值；
+      arrall[arrall.length] = [0, 20 * lis.length - 1, "right"];
+      spanPosition(); //生成span小球事物
+      timer = null;
+      direction = 'right';
+      flag = null;
+    }
+    //生成小白球函数
+    function spanPosition() {
+      var temp;
+      do {
+        temp = false;
+        spanX = Math.floor(Math.random() * 36) * 20;
+        spanY = Math.floor(Math.random() * 29) * 20;
+        //for循环来保证小白球不会出现在蛇身体的内部
+        for (var i = 0; i < lis.length; i++) {
+          if (spanX == arrall[i][1] &&
+            spanY == arrall[i][0]) {
+            temp = true;
+            break;
+          }
+        }
+      } while (temp);
+      span.style.left = spanX + "px";
+      span.style.top = spanY + "px";
+      span.style.display = "block";
+    }
+    //按下键盘按键
+    document.onkeydown = function (e) {
+      //如果是红的，则屏蔽所有按键
+      if (lis[0].style.backgroundColor === "red") return;
+      //如果是空格键
+      if (e.keyCode == 32) {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+          flag = true;
+        } else {
+          timer = setInterval(move, times);
+          flag = false;
+          //如果游戏没有运行,也就是初次启动,而不是暂停后的启动
+          if (!stars) {
+            //如果是失败了，蛇头为红色，此时也屏蔽空格
+            var li = document.createElement('li');
+            li.innerHTML = "吃掉小球数量为：" + (arrall.length - 1 - num) + "枚！";
+            ol.appendChild(li);
+            ol_lis = document.querySelectorAll("ol li");
+            stars = true;
+          }
+        }
+        return;
+      }
+      //如果游戏没有开始开，则其他按键失效
+      if (!stars) return;
+      //如果是回车或者Q
+      if (e.keyCode == 13 || e.keyCode == 81) {
+        if (timer) {
+          clearInterval(timer);
+          if (times == "50") times = 200;
+          else times = 50;
+          timer = setInterval(move, times);
+        } else {
+          if (times == "50") times = 200;
+          else times = 50;
+        }
+        return;
+      }
+      if (flag) return;
+      if (e.keyCode == 38 || e.keyCode == 87) {
+        if (direction == "bottom" || direction == "top") {
+          return;
+        }
+        flag = 'top';
+      } else if (e.keyCode == 37 || e.keyCode == 65) {
+        if (direction == "right" || direction == "left") {
+          return;
+        }
+        flag = 'left';
+      } else if (e.keyCode == 39 || e.keyCode == 68) {
+        if (direction == "left" || direction == "right") {
+          return;
+        }
+        flag = 'right';
+      } else if (e.keyCode == 40 || e.keyCode == 83) {
+        if (direction == "top" || direction == "bottom") {
+          return;
+        }
+        flag = 'bottom';
+      } else {
+        returnValue = false;
+        return;
+      }
+      times = 200;
+      clearInterval(timer);
+      move();
+    }
+    //移动函数
+    function move() {
+      //如果安了方向键,那么为direction赋flag的值
+      if (flag) {
+        direction = flag;
+      }
+      //用for循环依次移动每一个li
+      for (var i = arrall.length - 1; i >= 0; i--) {
+        if (i == arrall.length - 1) {
+          var arrs = [];
+          arrs[0] = arrall[i - 1][0];
+          arrs[1] = arrall[i - 1][1];
+          arrs[2] = arrall[i - 1][2];
+          arrall[i] = arrs;
+        } else {
+          //如果是第一个li，把它的方向信息及时更新
+          if (i == 0) {
+            arrall[i][2] = direction;
+          } else {
+            //如果不是，把li移动的方向设置为前一个的
+            arrall[i][2] = arrall[i - 1][2];
+          }
+          //根据方向来更新位置
+          switch (arrall[i][2]) {
+            case "top":
+              arrall[i][0] -= 20;
+              lis[i].style.top = arrall[i][0] + "px";
+              lis[i].querySelector('b').style.transform = "translate(-10px,0) rotate(270deg)";
+              break;
+            case "right":
+              arrall[i][1] += 20;
+              lis[i].style.left = arrall[i][1] + "px";
+              lis[i].querySelector('b').style.transform = "translate(-10px,0) rotate(0deg)";
+              break;
+            case "bottom":
+              arrall[i][0] += 20;
+              lis[i].style.top = arrall[i][0] + "px";
+              lis[i].querySelector('b').style.transform = "translate(-10px,0) rotate(90deg)";
+              break;
+            case "left":
+              arrall[i][1] -= 20;
+              lis[i].style.left = arrall[i][1] + "px";
+              lis[i].querySelector('b').style.transform = "translate(-10px,0) rotate(180deg)";
+              break;
+          }
+        }
+      }
+      lis[0].querySelector('b').style.transform = "translate(-12px,0) rotate(0deg)";
+      //再判断是不是按下了方向键,用来转动蛇头
+      if (flag) {
+        if (flag == "bottom") {
+          lis[0].style.transform = "rotate(90deg)";
+        } else if (flag == "right") {
+          lis[0].style.transform = "rotate(0deg)";
+        } else if (flag == "left") {
+          lis[0].style.transform = "rotate(180deg)";
+        } else if (flag == "top") {
+          lis[0].style.transform = "rotate(270deg)";
+        }
+        flag = null;
+        timer = setInterval(move, times);
+      }
+      //判断是否吃掉了小球
+      if (arrall[0][0] == spanY && arrall[0][1] == spanX) {
+        clearInterval(timer);
+        times = 200;
+        timer = setInterval(move, times);
+        //新产生一枚小球点
+        span.style.display = "none";
+        spanPosition();
+        //下面两个是启动产生小白点的函数定时器
+        index[index.length] = 1;
+        timers[timers.length] = setInterval(dingshi, 20, timers.length);
+      }
+      //判断有没有碰到墙壁或自己
+      for (var i = 1; i < lis.length; i++) {
+        if (arrall[0][0] == arrall[i][0] &&
+          arrall[0][1] == arrall[i][1] ||
+          arrall[0][0] < 0 ||
+          arrall[0][0] == 600 ||
+          arrall[0][1] < 0 ||
+          arrall[0][1] == 740) {
+          clearInterval(timer);
+          lis[0].style.zIndex = lis.length;
+          lis[0].style.backgroundColor = "red";
+          stars = false;
+          var tempTimer = setTimeout(function () {
+            lis[0].style.backgroundColor = "#b5cad5";
+            star();
+          }, 1000);
+          break;
+        }
+      }
+    }
+    //吃掉小球,出现顺着蛇身子移动的白点的函数
+    function dingshi(temp) {
+      lis[index[temp]].style.backgroundColor = "#b5cad5";
+      if (index[temp] == lis.length - 1) {
+        clearInterval(timers[temp]);
+        //新生成的li的数组，其位置和方向信息等于之前的最后一个li
+        var arr = [arrall[arrall.length - 1][0], arrall[arrall.length - 1][1], arrall[arrall.length - 1][2]];
+        arrall[arrall.length] = arr;
+        //创建新的li元素，并且用另一个函数，给这个li赋值位置和方向信息
+        var li = document.createElement("li");
+        var b = document.createElement('b');
+        li.appendChild(b);
+        ul.appendChild(li);
+        lis = document.querySelectorAll("ul li");
+        lis[lis.length - 1].style.top = arr[0] + "px";
+        lis[lis.length - 1].style.left = arr[1] + "px";
+        ol_lis[ol_lis.length - 1].innerHTML = "吃掉小球数量为：" + (arrall.length - 1 - num) + "枚！";
+        return;
+      };
+      lis[index[temp] + 1].style.backgroundColor = "#fff";
+      index[temp]++;
+    }
+  }
+</script> 
+
+</html>

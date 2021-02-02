@@ -1,0 +1,109 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: #090e20;
+}
+
+.big {
+  width: 1000px;
+  height: 600px;
+  border: 1px dotted #fff;
+  margin: 30px auto;
+}
+p {
+  margin-bottom: 10px;
+}
+/* 右边游戏区 */
+.right {
+  width: 740px;
+  float: right;
+  height: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+/* 小球 */
+.right span {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 30%;
+}
+/* 蛇身 */
+ul {
+  list-style: none;
+}
+ul li {
+  list-style: none;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #b5cad5;
+  box-sizing: border-box;
+  border: 1px solid #090e20;
+}
+ul li b {
+  display: block;
+  z-index: 100;
+  width: 2px;
+  height: 18px;
+  background-color: #b5cad5;
+  position: absolute;
+  top: 0;
+  left: 8px;
+  transform-origin: 11px 9px;
+  transform: translate(-10px, 0) rotate(0deg);
+}
+ul li:first-child b {
+  width: 4px;
+  transform: translate(-12px, 0) rotate(0deg);
+}
+ul li:last-child b {
+  background-color: transparent;
+}
+/* 蛇头 */
+ul li:nth-child(1) {
+  border-radius: 0 50% 50% 0;
+}
+/* 蛇眼 */
+ul li:nth-child(1)::before {
+  content: '';
+  display: block;
+  background-color: #090e20;
+  width: 2px;
+  height: 2px;
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  z-index: 2;
+}
+ul li:nth-child(1)::after {
+  content: '';
+  display: block;
+  background-color: #090e20;
+  width: 2px;
+  height: 2px;
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  z-index: 2;
+}
+/* 说明 */
+.explain {
+  float: left;
+  box-sizing: border-box;
+  border-right: 1px dotted #fff;
+  height: 100%;
+  width: 260px;
+  color: #fff;
+}
+.explain em {
+  color: #b3c6ff;
+  font-style: normal;
+}
+.ballCount li {
+  margin-left: 25px;
+}

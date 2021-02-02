@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>贪吃蛇</title>
+  <link rel="stylesheet" href="./css/snake.css">
+  <script src="./js/snake.js" type="module"></script>
+</head>
+<body>
+  <div class="big">
+    <div class="explain">
+      <p>点击<em>空格</em>开始或暂停</p>
+      <p>通过按<em>WASD</em>或<em>方向键</em>控制方向</p>
+      <p>通过<em>回车键</em>或者<em>Q</em>键进行加速</p>
+      <p>当方向改变，或吃到小球，速度自动恢复正常</p>
+      <br>
+      <p>以下为每局吃掉的小球个数</p>
+      <ol class="ballCount"></ol>
+    </div>
+    <div class="right">
+      <span></span><!-- 作为小球 -->
+      <ul></ul>
+    </div>
+  </div>
+</body>
+</html>
